@@ -4,10 +4,8 @@ import 'package:checkin/utils/colors.dart';
 import 'package:checkin/utils/inputdialog.dart';
 import 'package:checkin/utils/myButton.dart';
 import 'package:checkin/widgets/Scan_Page/controller/checkincontroller.dart';
-import 'package:checkin/widgets/Scan_Page/scanner.dart';
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
@@ -146,7 +144,7 @@ class _Scanner_screenState extends State<Scanner_screen> {
               DialogButton(
                 onpressed: (input) async {
                   print(input);
-                  await _fetchAttendee(input); // Fetch attendee with input code
+                  await _fetchAttendee(input); 
                 },
                 controller: controller,
               )

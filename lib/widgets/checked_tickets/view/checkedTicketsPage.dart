@@ -1,9 +1,6 @@
+import 'package:checkin/widgets/checked_tickets/controller/CheckedTicketsController.dart';
+import 'package:checkin/widgets/checked_tickets/view/components/RegistrationList.dart';
 import 'package:flutter/material.dart';
-import '../../../utils/MyAppBar.dart';
-import '../../../utils/colors.dart';
-import '../../../utils/searchField.dart';
-import '../../../utils/table.dart'; // Assuming your table widget is here
-import '../controller/controller.dart';
 
 class CheckedTicketsPage extends StatefulWidget {
   const CheckedTicketsPage({super.key});
@@ -13,49 +10,75 @@ class CheckedTicketsPage extends StatefulWidget {
 }
 
 class _CheckedTicketsPageState extends State<CheckedTicketsPage> {
-  late Future<List<Map<String, dynamic>>> ticketsFuture;
-  List<Map<String, dynamic>> tickets = [];
-  List<Map<String, dynamic>> filteredTickets = [];
-  TextEditingController searchController = TextEditingController();
   final CheckedTicketsController _controller = CheckedTicketsController();
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchTickets();
-  }
-
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchTickets() async {
-    await _controller.fetchCheckedTickets();
-    setState(() {});
+  TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _filteredRegistrations = [];
+  void _filterRegistrations(String query) async {
+    if (query.isEmpty) {
+      _filteredRegistrations = [];
+    } else {
+      final registrations = await _controller.fetchRegistrations();
+      _filteredRegistrations = registrations.where((registration) {
+        return registration['name'].toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Background,
-      appBar: MyAppBar(
-        title: "Checked Tickets",
-        leading: false,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-        child: Column(
-          children: [
-            SearchField(),
-            SizedBox(height: 10),
-            _controller.isLoading
-                ? Center(child: CircularProgressIndicator())
-                : _controller.errorMessage.isNotEmpty
-                    ? Center(child: Text('Error: ${_controller.errorMessage}'))
-                    : MyTable(tickets: _controller.checkedTickets),
-          ],
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Liste des inscriptions'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(50.0),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Rechercher une inscription...',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    // Filtrer les inscriptions en fonction de la recherche
+                    _filterRegistrations(value);
+                  });
+                },
+              ),
+            ),
+          ),
+        ),
+        body: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _controller.fetchRegistrations(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Erreur : ${snapshot.error}',
+                  style: const TextStyle(fontSize: 18, color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(
+                child: Text(
+                  "Aucune inscription disponible",
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              );
+            }
+
+            // Utilise les inscriptions filtrées ou toutes les inscriptions si aucune recherche
+            _filteredRegistrations = _searchController.text.isEmpty
+                ? snapshot.data!
+                : _filteredRegistrations;
+
+            return RegistrationList(registrations: _filteredRegistrations);
+          },
         ),
       ),
     );

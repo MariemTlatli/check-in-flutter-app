@@ -3,21 +3,23 @@ import 'package:checkin/Api/EndPoint.dart';
 import 'package:http/http.dart' as http;
 
 class HttpClient {
-  static const String baseUrl =
-      EndPoint.baseUrl; // Replace with your API base URL.
-  final int timeoutDuration = 15; // Timeout duration in seconds
-
   // GET request
   Future<dynamic> get(String endpoint, {Map<String, String>? headers}) async {
     try {
-      final Uri url = Uri.parse('$baseUrl/$endpoint');
-      final response = await http
-          .get(url, headers: headers)
-          .timeout(Duration(seconds: timeoutDuration));
+      final Uri url = Uri.parse('${EndPoint.baseUrl}/$endpoint');
+
+      final response = await http.get(
+        url,
+        headers: {
+          ...?headers,
+          "Authorization": "Bearer ${EndPoint.token}",
+          "Content-Type": "application/json"
+        },
+      ).timeout(Duration(seconds: EndPoint.timeoutDuration));
 
       return _handleResponse(response);
     } catch (e) {
-      rethrow; // Propagate the error for further handling
+      rethrow; // Propager l'erreur pour gestion ultérieure
     }
   }
 
@@ -25,10 +27,10 @@ class HttpClient {
   Future<dynamic> post(String endpoint,
       {Map<String, String>? headers, Object? body}) async {
     try {
-      final Uri url = Uri.parse('$baseUrl/$endpoint');
+      final Uri url = Uri.parse('${EndPoint.baseUrl}/$endpoint');
       final response = await http
           .post(url, headers: headers, body: body)
-          .timeout(Duration(seconds: timeoutDuration));
+          .timeout(Duration(seconds: EndPoint.timeoutDuration));
 
       return _handleResponse(response);
     } catch (e) {
@@ -40,24 +42,23 @@ class HttpClient {
   Future<dynamic> put(String endpoint,
       {Map<String, String>? headers, Object? body}) async {
     try {
-      final Uri url = Uri.parse('$baseUrl/$endpoint');
+      final Uri url = Uri.parse('${EndPoint.baseUrl}/$endpoint');
       final response = await http
           .put(url, headers: headers, body: body)
-          .timeout(Duration(seconds: timeoutDuration));
+          .timeout(Duration(seconds: EndPoint.timeoutDuration));
 
       return _handleResponse(response);
     } catch (e) {
-      
       rethrow; // Propagate the error for further handling
     }
   }
 
   // A helper function to handle the response
   dynamic _handleResponse(http.Response response) {
-    // If the status code is 200, decode the JSON data.
     if (response.statusCode == 200) {
       try {
-        return json.decode(response.body); // Assuming the response body is JSON
+        print(json.decode(response.body));
+        return json.decode(response.body);
       } catch (e) {
         throw Exception('Failed to parse response: $e');
       }
